@@ -11,7 +11,7 @@ function db_open(?string $path = null): PDO {
     $pdo->exec('PRAGMA journal_mode = WAL');
     $pdo->exec('CREATE TABLE IF NOT EXISTS records (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        count      INTEGER NOT NULL CHECK (count BETWEEN 1 AND ' . MAX_COUNT . '),
+        entry_time TEXT    NOT NULL,
         created_at TEXT    NOT NULL
     )');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_records_created_at ON records (created_at)');

@@ -29,12 +29,12 @@ $action = $_GET['action'] ?? '';
 
 switch ($action) {
     case 'add': {
-        $count = read_json_body()['count'] ?? null;
-        if (!is_int($count) || $count < 1 || $count > MAX_COUNT) {
-            respond(400, ['error' => 'count must be an integer between 1 and ' . MAX_COUNT]);
+        $entryTime = read_json_body()['entry_time'] ?? null;
+        if (!is_string($entryTime) || !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $entryTime)) {
+            respond(400, ['error' => 'entry_time must be HH:MM']);
         }
-        $rec = add_record($db, $count);
-        if ($rec === null) { respond(400, ['error' => 'count must be an integer between 1 and ' . MAX_COUNT]); }
+        $rec = add_record($db, $entryTime);
+        if ($rec === null) { respond(400, ['error' => 'entry_time must be HH:MM']); }
         respond(201, $rec);
         break;
     }
@@ -100,8 +100,10 @@ switch ($action) {
         $id = $in['id'] ?? null;
         $id = is_int($id) ? $id : (is_string($id) && ctype_digit($id) ? (int)$id : null);
         if ($id === null || $id < 1) { respond(400, ['error' => 'invalid id']); }
-        $count = $in['count'] ?? null;
-        if ($count !== null && !is_int($count)) { respond(400, ['error' => 'invalid count']); }
+        $entryTime = $in['entry_time'] ?? null;
+        if ($entryTime !== null && (!is_string($entryTime) || !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $entryTime))) {
+            respond(400, ['error' => 'invalid entry_time']);
+        }
         $createdAt = $in['created_at'] ?? null;
         if ($createdAt !== null) {
             if (!is_string($createdAt) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $createdAt)) {
@@ -109,9 +111,9 @@ switch ($action) {
             }
             $createdAt .= ':00';
         }
-        $result = update_record($db, $id, $count, $createdAt);
+        $result = update_record($db, $id, $entryTime, $createdAt);
         if ($result['error'] === 'not_found') { respond(404, ['error' => 'not found']); }
-        if ($result['error'] === 'invalid_count') { respond(400, ['error' => 'invalid count']); }
+        if ($result['error'] === 'invalid_entry_time') { respond(400, ['error' => 'invalid entry_time']); }
         if ($result['error'] === 'invalid_datetime') { respond(400, ['error' => 'invalid datetime']); }
         respond(200, ['ok' => true, 'record' => $result['record']]);
         break;
@@ -119,22 +121,17 @@ switch ($action) {
     case 'add_record': {
         require_auth();
         $in = read_json_body();
-        $count = $in['count'] ?? null;
-        if (!is_int($count) || $count < 1 || $count > MAX_COUNT) {
-            respond(400, ['error' => 'count must be an integer between 1 and ' . MAX_COUNT]);
+        $entryTime = $in['entry_time'] ?? null;
+        if (!is_string($entryTime) || !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $entryTime)) {
+            respond(400, ['error' => 'entry_time must be HH:MM']);
         }
         $date = $in['date'] ?? null;
         if (!is_string($date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)
             || !checkdate((int)substr($date, 5, 2), (int)substr($date, 8, 2), (int)substr($date, 0, 4))) {
             respond(400, ['error' => 'invalid date']);
         }
-        $time = $in['time'] ?? null;
-        if (!is_string($time) || !preg_match('/^\d{2}:\d{2}$/', $time)
-            || (int)substr($time, 0, 2) > 23 || (int)substr($time, 3, 2) > 59) {
-            respond(400, ['error' => 'invalid time']);
-        }
-        $rec = add_record($db, $count, new DateTimeImmutable($date . ' ' . $time . ':00', new DateTimeZone(APP_TZ)));
-        if ($rec === null) { respond(400, ['error' => 'count must be an integer between 1 and ' . MAX_COUNT]); }
+        $rec = add_record($db, $entryTime, new DateTimeImmutable($date . ' ' . $entryTime . ':00', new DateTimeZone(APP_TZ)));
+        if ($rec === null) { respond(400, ['error' => 'entry_time must be HH:MM']); }
         respond(201, $rec);
         break;
     }

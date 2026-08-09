@@ -119,31 +119,31 @@ async function main() {
   check('E1 empty message', await evaluate("document.getElementById('today-list').textContent.includes('まだ記録がありません')"));
   check('E1 admin link', await evaluate("document.querySelector('a[href=\"admin.php\"]') !== null"));
 
-  // E2: count=3 を記録 → total=3、行が1件
-  await evaluate("document.getElementById('count').value = '3';");
+  // E2: entry_time=10:30 を記録 → total=1、行が1件
+  await evaluate("document.getElementById('entry-time').value = '10:30';");
   await evaluate("document.getElementById('add-btn').click();");
-  check('E2 total=3', await waitFor("document.getElementById('today-total').textContent === '3'"));
+  check('E2 total=1', await waitFor("document.getElementById('today-total').textContent === '1'"));
   check('E2 one row', (await evaluate("document.querySelectorAll('#today-list .record-row').length")) === 1);
-  check('E2 row shows 3枚', await evaluate("document.querySelector('#today-list .record-row').textContent.includes('3 枚')"));
+  check('E2 row shows 入庫 10:30', await evaluate("document.querySelector('#today-list .record-row').textContent.includes('入庫 10:30')"));
 
-  // E3: count=2 を追加 → total=5、行2件
-  await evaluate("document.getElementById('count').value = '2';");
+  // E3: entry_time=10:31 を追加 → total=2、行2件
+  await evaluate("document.getElementById('entry-time').value = '10:31';");
   await evaluate("document.getElementById('add-btn').click();");
-  check('E3 total=5', await waitFor("document.getElementById('today-total').textContent === '5'"));
+  check('E3 total=2', await waitFor("document.getElementById('today-total').textContent === '2'"));
   check('E3 two rows', (await evaluate("document.querySelectorAll('#today-list .record-row').length")) === 2);
 
   const md = await evaluate("(() => { const n = new Date(); return String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0'); })()");
 
-  // E4: 画面上部の本日日付クリック → カレンダーが開く（PWなし公開）・今日のセルにバッジ5
+  // E4: 画面上部の本日日付クリック → カレンダーが開く（PWなし公開）・今日のセルにバッジ2
   await evaluate("document.getElementById('today-date').click();");
   check('E4 calendar dialog opens', await waitFor("document.getElementById('calendar-dialog')?.classList.contains('show')"));
-  check('E4 today cell badge 5', await waitFor(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); return cell ? cell.querySelector('.cal-badge')?.textContent === '5' : false; })()`));
+  check('E4 today cell badge 2', await waitFor(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); return cell ? cell.querySelector('.cal-badge')?.textContent === '2' : false; })()`));
 
-  // E5: 今日のセルクリック → カレンダーが閉じ日詳細モーダル（2行・2件・5枚）
+  // E5: 今日のセルクリック → カレンダーが閉じ日詳細モーダル（2行・2枚）
   await evaluate(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); cell.click(); })()`);
   check('E5 day dialog opens', await waitFor("document.getElementById('day-dialog')?.classList.contains('show')"));
   check('E5 dialog shows 2 rows', await evaluate("document.querySelectorAll('#day-list .record-row').length === 2"));
-  check('E5 title 2件・5枚', await evaluate("document.getElementById('day-title')?.textContent?.includes('2件・5枚')"));
+  check('E5 title 2枚', await evaluate("document.getElementById('day-title')?.textContent?.includes('（2枚）')"));
 
   // E6: メインの日詳細は見るだけ（削除ボタンなし）
   check('E6 no delete in main day detail', (await evaluate("document.querySelectorAll('#day-list .del').length")) === 0);
@@ -151,18 +151,18 @@ async function main() {
   await evaluate("bootstrap.Modal.getInstance(document.getElementById('day-dialog')).hide();");
   await waitFor("!document.getElementById('day-dialog').classList.contains('show')");
 
-  // E7: 今日一覧の「2 枚」行を削除 → PWダイアログが開く
-  await evaluate("[...document.querySelectorAll('#today-list .record-row')].find(r => r.textContent.includes('2 枚')).querySelector('.del').click();");
+  // E7: 今日一覧の「入庫 10:31」行を削除 → PWダイアログが開く
+  await evaluate("[...document.querySelectorAll('#today-list .record-row')].find(r => r.textContent.includes('入庫 10:31')).querySelector('.del').click();");
   check('E7 pw dialog opens', await waitFor("document.getElementById('pw-dialog').classList.contains('show')"));
   await sleep(800);
 
-  // E8: 誤PW → エラー / 正PW(1234) → 削除成功 total=3
+  // E8: 誤PW → エラー / 正PW(1234) → 削除成功 total=1
   await evaluate("document.getElementById('pw').value = '9999';");
   await evaluate("document.getElementById('pw-ok').click();");
   check('E8 wrong pw error', await waitFor("document.getElementById('pw-err').textContent.includes('パスワードが違います')"));
   await evaluate("document.getElementById('pw').value = '1234';");
   await evaluate("document.getElementById('pw-ok').click();");
-  check('E8 total=3 after delete', await waitFor("document.getElementById('today-total').textContent === '3'"));
+  check('E8 total=1 after delete', await waitFor("document.getElementById('today-total').textContent === '1'"));
   check('E8 one row left', (await evaluate("document.querySelectorAll('#today-list .record-row').length")) === 1);
 
   // E9: 残り1件も削除（セッション認証済みなのでPW不要）→ total 0
@@ -174,14 +174,14 @@ async function main() {
   await evaluate("document.getElementById('today-date').click();");
   await waitFor("document.getElementById('calendar-dialog')?.classList.contains('show')");
   if (await evaluate("typeof window.__refreshNow === 'function'")) {
-    await evaluate("fetch('api.php?action=add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({count:5})}).then(r => r.status)");
+    await evaluate("fetch('api.php?action=add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entry_time:'10:30'})}).then(r => r.status)");
     await evaluate("window.__refreshNow();");
-    check('E10 today total=5 after refreshNow', await waitFor("document.getElementById('today-total').textContent === '5'"));
-    check('E10 calendar badge updates to 5', await waitFor(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); return cell ? cell.querySelector('.cal-badge')?.textContent === '5' : false; })()`));
+    check('E10 today total=1 after refreshNow', await waitFor("document.getElementById('today-total').textContent === '1'"));
+    check('E10 calendar badge updates to 1', await waitFor(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); return cell ? cell.querySelector('.cal-badge')?.textContent === '1' : false; })()`));
   } else {
     check('E10 refreshNow exists', false);
-    check('E10 today total=5 after refreshNow', false);
-    check('E10 calendar badge updates to 5', false);
+    check('E10 today total=1 after refreshNow', false);
+    check('E10 calendar badge updates to 1', false);
   }
 
   // E18: カレンダー 7 列固定レイアウト（CSS Grid・等幅・行折返し・行高統一・バッジはみ出しなし）
@@ -224,10 +224,10 @@ async function main() {
   check('E18 same-row heights equal', layout.rowHeights.length === 1 && layout.rowHeights[0] >= 44, 'heights=' + JSON.stringify(layout.rowHeights));
   check('E18 badge no overflow', layout.badgeOverflow === false, 'badge=' + layout.badgeText);
 
-  // カレンダーの今日セル → 日詳細（1行・5枚）
+  // カレンダーの今日セル → 日詳細（1行・入庫 10:30）
   await evaluate(`(() => { const cell = [...document.querySelectorAll('#cal-grid .cal-cell')].find(c => c.dataset.date && c.dataset.date.endsWith('${md}')); cell.click(); })()`);
   await waitFor("document.getElementById('day-dialog')?.classList.contains('show')");
-  check('E10 day dialog 1 row 5枚', await evaluate("document.querySelectorAll('#day-list .record-row').length === 1 && document.getElementById('day-list').textContent.includes('5 枚')"));
+  check('E10 day dialog 1 row 入庫 10:30', await evaluate("document.querySelectorAll('#day-list .record-row').length === 1 && document.getElementById('day-list').textContent.includes('入庫 10:30')"));
   await sleep(800);
   await evaluate("bootstrap.Modal.getInstance(document.getElementById('day-dialog')).hide();");
   await waitFor("!document.getElementById('day-dialog').classList.contains('show')");
@@ -255,12 +255,12 @@ async function main() {
   check('E12 admin content hidden', (await evaluate("document.getElementById('admin-content').hidden")) === true);
   await sleep(800);
 
-  // E13: 正PW(1234) → 管理者コンテンツ表示・日別集計テーブル（今日のセル total=5）→ 日詳細（編集/削除ボタン）
+  // E13: 正PW(1234) → 管理者コンテンツ表示・日別集計テーブル（今日のセル total=1）→ 日詳細（編集/削除ボタン）
   await evaluate("document.getElementById('a-pw').value = '1234';");
   await evaluate("document.getElementById('a-pw-ok').click();");
   check('E13 admin content shown', await waitFor("document.getElementById('admin-content').hidden === false"));
   check('E13 month table shown', await waitFor("document.getElementById('a-month-table').hidden === false"));
-  check('E13 today cell total 5', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '5' : false; })()`));
+  check('E13 today cell total 1', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '1' : false; })()`));
   await evaluate(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); cell.click(); })()`);
   check('E13 admin day dialog', await waitFor("document.getElementById('a-day-dialog')?.classList.contains('show')"));
   check('E13 edit/delete buttons', await evaluate("document.querySelectorAll('#a-day-list .edit').length === 1 && document.querySelectorAll('#a-day-list .del').length === 1"));
@@ -288,7 +288,7 @@ async function main() {
 
   // E15: 分析タブ → 期間サマリ + 曜日別/時間帯別グラフ
   await evaluate("document.getElementById('atab-analysis').click();");
-  check('E15 summary total 5', await waitFor("document.getElementById('a-summary-total').textContent === '5'"));
+  check('E15 summary total 1', await waitFor("document.getElementById('a-summary-total').textContent === '1'"));
   check('E15 dow chart drawn', await waitFor("document.getElementById('a-dow-chart').width > 0"));
   check('E15 hour chart drawn', await waitFor("document.getElementById('a-hour-chart').width > 0"));
 
@@ -309,17 +309,17 @@ async function main() {
     && hr.labels[hr.labels.length - 1] === hr.hMax + '時',
     JSON.stringify(hr));
 
-  // E16: 集計タブ → 日詳細で編集（5→8）→ 行・集計テーブルに反映
+  // E16: 集計タブ → 日詳細で編集（入庫時間 10:30→11:00）→ 行・集計テーブルに反映
   await evaluate("document.getElementById('atab-monthly').click();");
   await waitFor("document.getElementById('a-month-table').hidden === false");
   await evaluate(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); cell.click(); })()`);
   await waitFor("document.getElementById('a-day-dialog')?.classList.contains('show')");
   await evaluate("document.querySelector('#a-day-list .edit').click();");
   check('E16 edit dialog opens', await waitFor("document.getElementById('a-edit-dialog')?.classList.contains('show')"));
-  await evaluate("document.getElementById('a-edit-count').value = '8';");
+  await evaluate("document.getElementById('a-edit-entry-time').value = '11:00';");
   await evaluate("document.getElementById('a-edit-ok').click();");
-  check('E16 row updated to 8枚', await waitFor("document.getElementById('a-day-list').textContent.includes('8 枚')"));
-  check('E16 table total 8', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '8' : false; })()`));
+  check('E16 row updated to 入庫 11:00', await waitFor("document.getElementById('a-day-list').textContent.includes('入庫 11:00')"));
+  check('E16 table total 1', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '1' : false; })()`));
   await sleep(800);
   await evaluate("bootstrap.Modal.getInstance(document.getElementById('a-day-dialog')).hide();");
   await waitFor("!document.getElementById('a-day-dialog').classList.contains('show')");
@@ -331,16 +331,15 @@ async function main() {
   check('E17 row deleted', await waitFor("document.querySelectorAll('#a-day-list .record-row').length === 0"));
   check('E17 table total 0', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '0' : false; })()`));
 
-  // E22: 日詳細の「追加」→ モーダルで枚数+時間 → 選択日（今日）に記録追加（R4）
+  // E22: 日詳細の「追加」→ モーダルで入庫時間のみ → 選択日（今日）に記録追加（R4）
   check('E22 add button exists', await evaluate("document.getElementById('a-day-add') !== null"));
   await evaluate("document.getElementById('a-day-add').click();");
   check('E22 add dialog opens', await waitFor("document.getElementById('a-add-dialog')?.classList.contains('show')"));
-  await evaluate("document.getElementById('a-add-count').value = '2';");
   await evaluate("document.getElementById('a-add-time').value = '10:30';");
   await evaluate("document.getElementById('a-add-ok').click();");
   check('E22 add dialog closes', await waitFor("!document.getElementById('a-add-dialog').classList.contains('show')"));
-  check('E22 row added 10:30 2枚', await waitFor("document.querySelectorAll('#a-day-list .record-row').length === 1 && document.getElementById('a-day-list').textContent.includes('10:30') && document.getElementById('a-day-list').textContent.includes('2 枚')"));
-  check('E22 table total 2', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '2' : false; })()`));
+  check('E22 row added 入庫 10:30', await waitFor("document.querySelectorAll('#a-day-list .record-row').length === 1 && document.getElementById('a-day-list').textContent.includes('入庫 10:30')"));
+  check('E22 table total 1', await waitFor(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); return cell ? cell.parentElement.querySelector('td:last-child').textContent === '1' : false; })()`));
   check('E22 new row has edit/delete', await evaluate("document.querySelectorAll('#a-day-list .edit').length === 1 && document.querySelectorAll('#a-day-list .del').length === 1"));
 
   // E19: ログアウト（記録画面へボタン・確認なし）→ セッション破棄で PW 再要求

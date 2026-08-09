@@ -46,8 +46,7 @@ body{padding-bottom:60px}
 
   <div class="card mt-3">
     <div class="card-body d-flex gap-2">
-      <input type="number" id="count" value="1" min="1" max="999" inputmode="numeric"
-             class="form-control form-control-lg text-center" aria-label="枚数">
+      <input type="time" id="entry-time" class="form-control form-control-lg text-center" aria-label="入庫時間">
       <button id="add-btn" class="btn btn-primary btn-lg px-4 flex-shrink-0">記録する</button>
     </div>
   </div>
@@ -188,7 +187,7 @@ async function openDayDetail(date) {
   const { status, data } = await api('GET', 'day&date=' + date);
   if (status !== 200) { toast('読み込みに失敗しました'); return; }
   const dt = new Date(date + 'T00:00:00');
-  $('day-title').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日（${data.records.length}件・${data.total}枚）`;
+  $('day-title').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日（${data.total}枚）`;
   const list = $('day-list');
   list.textContent = '';
   if (data.records.length === 0) {
@@ -205,7 +204,7 @@ async function openDayDetail(date) {
       time.textContent = r.created_at.slice(11, 16);
       const mid = document.createElement('span');
       mid.className = 'fw-semibold';
-      mid.textContent = r.count + ' 枚';
+      mid.textContent = '入庫 ' + r.entry_time;
       row.append(time, mid);
       list.append(row);
     }
@@ -222,7 +221,7 @@ function rowNode(r) {
   time.textContent = r.created_at.slice(11, 16);
   const mid = document.createElement('span');
   mid.className = 'fw-semibold';
-  mid.textContent = r.count + ' 枚';
+  mid.textContent = '入庫 ' + r.entry_time;
   const del = document.createElement('button');
   del.className = 'del btn btn-sm btn-outline-danger';
   del.textContent = '削除';
@@ -255,16 +254,21 @@ async function loadToday() {
   data.records.forEach(r => list.append(rowNode(r)));
 }
 
+function currentTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
 $('add-btn').addEventListener('click', async () => {
-  const v = parseInt($('count').value, 10);
-  if (!Number.isInteger(v) || v < 1 || v > 999) { toast('枚数は1〜999で入力してください'); return; }
-  const { status } = await api('POST', 'add', { count: v });
+  const et = $('entry-time').value;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(et)) { toast('入庫時間を入力してください'); return; }
+  const { status } = await api('POST', 'add', { entry_time: et });
   if (status === 201) {
-    $('count').value = '1'; toast('記録しました');
+    $('entry-time').value = currentTime(); toast('記録しました');
     await loadToday();
     refreshVisible();
   }
-  else if (status === 400) { toast('枚数は1〜999で入力してください'); }
+  else if (status === 400) { toast('入庫時間を入力してください'); }
   else { toast('エラーが発生しました'); }
 });
 
@@ -393,6 +397,7 @@ setInterval(checkVersion, 60000);
 checkVersion();
 
 $('today-date').textContent = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+$('entry-time').value = currentTime();
 loadToday();
 </script>
 </body>

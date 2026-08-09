@@ -48,7 +48,7 @@ header('Referrer-Policy: no-referrer');
         </div>
         <div class="text-danger small mb-2" id="a-month-err"></div>
         <table class="table table-sm" id="a-month-table" hidden>
-          <thead><tr><th class="text-start">日付</th><th class="text-end">件数</th><th class="text-end">枚数</th></tr></thead>
+          <thead><tr><th class="text-start">日付</th><th class="text-end">枚数</th></tr></thead>
           <tbody></tbody>
         </table>
         <p class="text-body-secondary small mt-2 mb-0">日付をクリックすると詳細の編集・削除ができます</p>
@@ -100,7 +100,6 @@ header('Referrer-Policy: no-referrer');
         <div id="a-analysis-body">
           <div class="d-flex flex-wrap gap-3 mb-3 small">
             <span>期間: <span id="a-summary-days">-</span>日</span>
-            <span>総件数: <span id="a-summary-records">-</span>件</span>
             <span>総枚数: <span id="a-summary-total">-</span>枚</span>
             <span>日別最大: <span id="a-summary-max">-</span></span>
             <span>日別平均: <span id="a-summary-avg">-</span>枚/日</span>
@@ -163,9 +162,7 @@ header('Referrer-Policy: no-referrer');
         <h3 class="modal-title h6" id="a-add-title">記録を追加</h3>
       </div>
       <div class="modal-body">
-        <label class="form-label" for="a-add-count">枚数（1〜999）</label>
-        <input type="number" id="a-add-count" class="form-control" min="1" max="999" inputmode="numeric">
-        <label class="form-label mt-2" for="a-add-time">時間</label>
+        <label class="form-label" for="a-add-time">入庫時間</label>
         <input type="time" id="a-add-time" class="form-control">
         <div class="text-danger small mt-2" id="a-add-err"></div>
       </div>
@@ -185,8 +182,8 @@ header('Referrer-Policy: no-referrer');
         <h3 class="modal-title h6">記録を編集</h3>
       </div>
       <div class="modal-body">
-        <label class="form-label" for="a-edit-count">枚数（1〜999）</label>
-        <input type="number" id="a-edit-count" class="form-control" min="1" max="999" inputmode="numeric">
+        <label class="form-label" for="a-edit-entry-time">入庫時間</label>
+        <input type="time" id="a-edit-entry-time" class="form-control">
         <label class="form-label mt-2" for="a-edit-datetime">日時</label>
         <input type="datetime-local" id="a-edit-datetime" class="form-control">
         <div class="text-danger small mt-2" id="a-edit-err"></div>
@@ -312,9 +309,9 @@ async function renderMonthly() {
   $('a-month-err').textContent = '';
   const tbody = $('a-month-table').querySelector('tbody');
   tbody.textContent = '';
-  let sumCount = 0, sumTotal = 0;
+  let sumTotal = 0;
   for (const d of data.days) {
-    sumCount += d.count; sumTotal += d.total;
+    sumTotal += d.total;
     const tr = document.createElement('tr');
     const tdDate = document.createElement('td');
     tdDate.className = 'text-start a-day-link text-primary';
@@ -322,26 +319,20 @@ async function renderMonthly() {
     tdDate.style.cursor = 'pointer';
     tdDate.style.textDecoration = 'underline';
     tdDate.addEventListener('click', () => openAdminDayDetail(d.date));
-    const tdCount = document.createElement('td');
-    tdCount.className = 'text-end';
-    tdCount.textContent = d.count;
     const tdTotal = document.createElement('td');
     tdTotal.className = 'text-end';
     tdTotal.textContent = d.total;
-    tr.append(tdDate, tdCount, tdTotal);
+    tr.append(tdDate, tdTotal);
     tbody.append(tr);
   }
   const tr = document.createElement('tr');
   const tdDate = document.createElement('td');
   tdDate.className = 'text-start fw-bold';
   tdDate.textContent = '合計';
-  const tdCount = document.createElement('td');
-  tdCount.className = 'text-end fw-bold';
-  tdCount.textContent = sumCount;
   const tdTotal = document.createElement('td');
   tdTotal.className = 'text-end fw-bold';
   tdTotal.textContent = sumTotal;
-  tr.append(tdDate, tdCount, tdTotal);
+  tr.append(tdDate, tdTotal);
   tbody.append(tr);
   $('a-month-table').hidden = false;
 }
@@ -381,7 +372,7 @@ async function renderAdminDayDetail(date) {
   const { status, data } = await api('GET', 'day&date=' + date);
   if (status !== 200) { toast('読み込みに失敗しました'); return; }
   const dt = new Date(date + 'T00:00:00');
-  $('a-day-title').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日（${data.records.length}件・${data.total}枚）`;
+  $('a-day-title').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日（${data.total}枚）`;
   const list = $('a-day-list');
   list.textContent = '';
   if (data.records.length === 0) {
@@ -399,7 +390,7 @@ async function renderAdminDayDetail(date) {
     time.textContent = r.created_at.slice(11, 16);
     const mid = document.createElement('span');
     mid.className = 'fw-semibold';
-    mid.textContent = r.count + ' 枚';
+    mid.textContent = '入庫 ' + r.entry_time;
     const btns = document.createElement('span');
     btns.className = 'd-flex gap-2 flex-shrink-0';
     const edit = document.createElement('button');
@@ -423,19 +414,19 @@ let editingId = null, editingDate = null;
 function openEditDialog(record, date) {
   editingId = record.id;
   editingDate = date;
-  $('a-edit-count').value = record.count;
+  $('a-edit-entry-time').value = record.entry_time;
   $('a-edit-datetime').value = record.created_at.slice(0, 16).replace(' ', 'T');
   $('a-edit-err').textContent = '';
   aEditModal.show();
 }
 
 async function saveEdit() {
-  const count = parseInt($('a-edit-count').value, 10);
-  if (!Number.isInteger(count) || count < 1 || count > 999) {
-    $('a-edit-err').textContent = '枚数は1〜999で入力してください';
+  const et = $('a-edit-entry-time').value;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(et)) {
+    $('a-edit-err').textContent = '入庫時間を入力してください';
     return;
   }
-  const body = { id: editingId, count };
+  const body = { id: editingId, entry_time: et };
   const dt = $('a-edit-datetime').value;
   if (dt) body.created_at = dt.replace('T', ' ');
   const { status } = await api('POST', 'update', body);
@@ -464,7 +455,6 @@ $('a-add-dialog').addEventListener('shown.bs.modal', () => { aAddModalShown = tr
 $('a-add-dialog').addEventListener('hidden.bs.modal', () => { aAddModalShown = false; });
 
 function openAddDialog(date) {
-  $('a-add-count').value = 1;
   $('a-add-time').value = '';
   $('a-add-err').textContent = '';
   const dt = new Date(date + 'T00:00:00');
@@ -473,17 +463,12 @@ function openAddDialog(date) {
 }
 
 async function saveAdd() {
-  const count = parseInt($('a-add-count').value, 10);
-  if (!Number.isInteger(count) || count < 1 || count > 999) {
-    $('a-add-err').textContent = '枚数は1〜999で入力してください';
-    return;
-  }
   const time = $('a-add-time').value;
-  if (!/^\d{2}:\d{2}$/.test(time)) {
-    $('a-add-err').textContent = '時間を入力してください';
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    $('a-add-err').textContent = '入庫時間を入力してください';
     return;
   }
-  const { status } = await api('POST', 'add_record', { count, date: aDayDate, time });
+  const { status } = await api('POST', 'add_record', { entry_time: time, date: aDayDate });
   if (status === 201) {
     $('a-add-err').textContent = '';
     // Bootstrap の hide() は表示遷移中は no-op のため、表示完了を待ってから閉じる
@@ -622,7 +607,6 @@ async function renderAnalysis() {
   $('a-analysis-body').hidden = empty;
   if (empty) return;
   $('a-summary-days').textContent = data.summary.days;
-  $('a-summary-records').textContent = data.summary.records;
   $('a-summary-total').textContent = data.summary.total;
   $('a-summary-max').textContent = data.summary.max_day ? `${data.summary.max_day.date.slice(5)}（${data.summary.max_day.total}枚）` : '-';
   $('a-summary-avg').textContent = data.summary.avg_per_day;
