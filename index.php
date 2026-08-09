@@ -45,9 +45,12 @@ body{padding-bottom:60px}
   </div>
 
   <div class="card mt-3">
-    <div class="card-body d-flex gap-2">
-      <input type="time" id="entry-time" class="form-control form-control-lg text-center" aria-label="入庫時間">
-      <button id="add-btn" class="btn btn-primary btn-lg px-4 flex-shrink-0">記録する</button>
+    <div class="card-body">
+      <label class="form-label mb-2" for="entry-time">入庫時間</label>
+      <div class="d-flex gap-2">
+        <input type="time" id="entry-time" class="form-control form-control-lg text-center">
+        <button id="add-btn" class="btn btn-primary btn-lg px-4 flex-shrink-0">記録する</button>
+      </div>
     </div>
   </div>
 
@@ -201,7 +204,7 @@ async function openDayDetail(date) {
       row.className = 'record-row';
       const time = document.createElement('span');
       time.className = 'text-body-secondary small';
-      time.textContent = r.created_at.slice(11, 16);
+      time.textContent = '打刻時刻 ' + r.created_at.slice(11, 16);
       const mid = document.createElement('span');
       mid.className = 'fw-semibold';
       mid.textContent = '入庫 ' + r.entry_time;
@@ -218,7 +221,7 @@ function rowNode(r) {
   row.className = 'record-row';
   const time = document.createElement('span');
   time.className = 'text-body-secondary small';
-  time.textContent = r.created_at.slice(11, 16);
+  time.textContent = '打刻時刻 ' + r.created_at.slice(11, 16);
   const mid = document.createElement('span');
   mid.className = 'fw-semibold';
   mid.textContent = '入庫 ' + r.entry_time;

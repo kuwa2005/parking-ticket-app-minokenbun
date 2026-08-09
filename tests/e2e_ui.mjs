@@ -118,6 +118,7 @@ async function main() {
   check('E1 initial total 0', (await evaluate("document.getElementById('today-total').textContent")) === '0');
   check('E1 empty message', await evaluate("document.getElementById('today-list').textContent.includes('まだ記録がありません')"));
   check('E1 admin link', await evaluate("document.querySelector('a[href=\"admin.php\"]') !== null"));
+  check('E1 entry-time label', await evaluate("document.querySelector('label[for=\"entry-time\"]')?.textContent?.includes('入庫時間')"));
 
   // E2: entry_time=10:30 を記録 → total=1、行が1件
   await evaluate("document.getElementById('entry-time').value = '10:30';");
@@ -125,6 +126,7 @@ async function main() {
   check('E2 total=1', await waitFor("document.getElementById('today-total').textContent === '1'"));
   check('E2 one row', (await evaluate("document.querySelectorAll('#today-list .record-row').length")) === 1);
   check('E2 row shows 入庫 10:30', await evaluate("document.querySelector('#today-list .record-row').textContent.includes('入庫 10:30')"));
+  check('E2 row shows 打刻時刻', await evaluate("document.querySelector('#today-list .record-row').textContent.includes('打刻時刻 ')"));
 
   // E3: entry_time=10:31 を追加 → total=2、行2件
   await evaluate("document.getElementById('entry-time').value = '10:31';");
@@ -144,6 +146,7 @@ async function main() {
   check('E5 day dialog opens', await waitFor("document.getElementById('day-dialog')?.classList.contains('show')"));
   check('E5 dialog shows 2 rows', await evaluate("document.querySelectorAll('#day-list .record-row').length === 2"));
   check('E5 title 2枚', await evaluate("document.getElementById('day-title')?.textContent?.includes('（2枚）')"));
+  check('E5 day dialog 打刻時刻', await evaluate("document.getElementById('day-list').textContent.includes('打刻時刻 ')"));
 
   // E6: メインの日詳細は見るだけ（削除ボタンなし）
   check('E6 no delete in main day detail', (await evaluate("document.querySelectorAll('#day-list .del').length")) === 0);
@@ -264,6 +267,7 @@ async function main() {
   await evaluate(`(() => { const cell = [...document.querySelectorAll('#a-month-table tbody tr td.a-day-link')].find(td => td.textContent.trim() === '${md}'); cell.click(); })()`);
   check('E13 admin day dialog', await waitFor("document.getElementById('a-day-dialog')?.classList.contains('show')"));
   check('E13 edit/delete buttons', await evaluate("document.querySelectorAll('#a-day-list .edit').length === 1 && document.querySelectorAll('#a-day-list .del').length === 1"));
+  check('E13 admin day 打刻時刻', await evaluate("document.getElementById('a-day-list').textContent.includes('打刻時刻 ')"));
   await sleep(800);
   await evaluate("bootstrap.Modal.getInstance(document.getElementById('a-day-dialog')).hide();");
   await waitFor("!document.getElementById('a-day-dialog').classList.contains('show')");
@@ -316,6 +320,7 @@ async function main() {
   await waitFor("document.getElementById('a-day-dialog')?.classList.contains('show')");
   await evaluate("document.querySelector('#a-day-list .edit').click();");
   check('E16 edit dialog opens', await waitFor("document.getElementById('a-edit-dialog')?.classList.contains('show')"));
+  check('E16 edit dialog 打刻日時 label', await evaluate("document.querySelector('label[for=\"a-edit-datetime\"]')?.textContent?.includes('打刻日時')"));
   await evaluate("document.getElementById('a-edit-entry-time').value = '11:00';");
   await evaluate("document.getElementById('a-edit-ok').click();");
   check('E16 row updated to 入庫 11:00', await waitFor("document.getElementById('a-day-list').textContent.includes('入庫 11:00')"));

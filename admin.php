@@ -184,7 +184,7 @@ header('Referrer-Policy: no-referrer');
       <div class="modal-body">
         <label class="form-label" for="a-edit-entry-time">入庫時間</label>
         <input type="time" id="a-edit-entry-time" class="form-control">
-        <label class="form-label mt-2" for="a-edit-datetime">日時</label>
+        <label class="form-label mt-2" for="a-edit-datetime">打刻日時</label>
         <input type="datetime-local" id="a-edit-datetime" class="form-control">
         <div class="text-danger small mt-2" id="a-edit-err"></div>
       </div>
@@ -387,7 +387,7 @@ async function renderAdminDayDetail(date) {
     row.className = 'record-row';
     const time = document.createElement('span');
     time.className = 'text-body-secondary small';
-    time.textContent = r.created_at.slice(11, 16);
+    time.textContent = '打刻時刻 ' + r.created_at.slice(11, 16);
     const mid = document.createElement('span');
     mid.className = 'fw-semibold';
     mid.textContent = '入庫 ' + r.entry_time;
