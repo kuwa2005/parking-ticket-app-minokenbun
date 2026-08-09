@@ -7,7 +7,7 @@
 - 各端末にはデータを保存せず、サーバー側の SQLite に永続化
 - モバイルファーストの日本語UI（Bootstrap 5.3.3）
 - PHP + SQLite(PDO) の標準構成のみ — 汎用レンタルサーバーにも置ける
-- デモ運用（本番 https://debugprint.com/parking/ 稼働中・Docker はローカル開発用に利用可）
+- デモ運用（本番 https://debugprint.com/parking-custom/ 稼働中・Docker はローカル開発用に利用可）
 
 ## 機能
 
@@ -26,14 +26,14 @@
 
 ## デモデータ
 
-デモデータ（2026-06-01〜2026-08-07 の 68 日・合計 401 件・各記録 1 枚・日ごと 5〜10 件・入庫時間 09:00〜17:05）はスクリプトで生成します。決定的生成（同じ結果を再現）・範囲内の既存データは差し替え・冪等です。
+本フォーク版の本番（https://debugprint.com/parking-custom/）のデモデータは **`seed_custom_demo.php`** で生成します（2026-05-01〜2026-08-09 の 101 日・合計 867 件・1 日 1〜15 枚・入庫時間 08:45〜16:30・発券時間 09:30〜17:05（発券は入庫以降）・同一日・同一分の発券時刻の重複なし）。決定的生成（同じ結果を再現）・範囲内の既存データは差し替え・範囲外は温存・冪等です。
 
 ```bash
-php scripts/seed_demo.php                          # 既定 data/parking.db へ投入
-PARK_DB_PATH=/path/to/parking.db php scripts/seed_demo.php   # 任意の DB へ投入
+php scripts/seed_custom_demo.php                        # 既定 data/parking.db へ投入
+PARK_DB_PATH=/path/to/parking.db php scripts/seed_custom_demo.php   # 任意の DB へ投入
 ```
 
-本番（https://debugprint.com/parking/）にも同じシードでデモデータ 401 件を投入済みです（2026-08-07）。
+元版互換のデモデータ（2026-06-01〜2026-08-07 の 68 日・合計 401 件・日ごと 5〜10 件）は `scripts/seed_demo.php` でも生成できます（元版本番 https://debugprint.com/parking/ はこのシードで投入済み・2026-08-07）。
 
 ## クイックスタート（Docker・ローカル開発用）
 
@@ -75,7 +75,9 @@ Bootstrap は CDN（jsDelivr）参照のため、アプリはPHPファイルの�
 
 **デプロイ一式は GitHub Releases から取得できます**（v1.0.0 以降・GitHub Actions で自動生成された zip = アプリ一式 + README + LICENSE）: https://github.com/kuwa2005/parking-ticket-app/releases
 
-**本番デプロイ実績（2026-08-07）**: coreserver.jp 共有ホスティングのサブディレクトリにデプロイし、受入テスト 10/10 PASS（記録・集計・認証・削除・DB直アクセス拒否・誤PWスロットル・セキュリティヘッダ）を確認済み。公開 URL は https://debugprint.com/parking/ （詳細: reports/2026-08-07-production-deploy.txt）。同日、ユーザーによる本番直接改修（DEMO 化）をリポジトリへ反映し、本番を正規シードで再投入・受入テスト 10/10 PASS（reports/2026-08-07-production-verify.txt）。**DEMO 運用のため本番の管理パスワードは 1234 です**（デモ用のためパスワードは形式的なもの — UI に注記表示）。**新機能ラウンド（同日）**: 日付クリック詳細モーダル・集計表示中の記録連動・60 秒自動更新チェックを本番へ直接デプロイし、受入テスト 13/13 PASS（reports/2026-08-07-production-verify.txt）。**管理者画面ラウンド（2026-08-09）**: 専用管理者 URL（/admin.php）新設（PW ダイアログ → 日別集計・日詳細編集/削除・月報/年報/分析）とメイン再編（カレンダー過去閲覧・PW なし公開）を本番へ直接デプロイ。受入テスト **17/17 PASS**・ブラウザ UI 検証（本番 URL に対するヘッドレス chrome での動作確認）を実施（reports/2026-08-07-production-verify.txt ほか）。**カレンダー・管理者画面改善ラウンド（同日）**: カレンダー 7 列グリッド修正・管理者画面へのログアウト内蔵・前月/翌月ボタンをデプロイ（受入 17/17 PASS・ブラウザ 16/16 PASS）。**グラフ表示変更 + 過去日追加ラウンド（同日・コミット 44f0709 → リリース証跡 6dc1c7f）**: 月報/年報グラフを明細の上へ・時間帯別グラフを実データ範囲へ・日詳細に「追加」ボタン（要認証 add_record）を本番へデプロイ。受入テスト **19/19 PASS**（add_record 401/400 検証含む）・ブラウザ UI 検証 **11/11 PASS**・デモデータ 402 件無傷（reports/2026-08-09-admin-round-chart-add-release.txt）。
+**本フォーク版の本番デプロイ（2026-08-10）**: 元版と同じ coreserver.jp 共有ホスティングに **https://debugprint.com/parking-custom/** としてデプロイ（SQLite 版・data/parking.db をシード済みで配置）。デモデータは上記 `seed_custom_demo.php` で生成した 867 件（2026-05-01〜08-09・1 日 1〜15 枚・入庫 08:45〜16:30・発券 09:30〜17:05）。デプロイ後、実環境で記録/日別/日詳細/管理者（ログイン・集計・更新）/未認証 401 を確認済み。管理パスワードは元版と同様 `1234`（デモ用）。
+
+**元版の本番デプロイ実績（2026-08-07）**: coreserver.jp 共有ホスティングのサブディレクトリにデプロイし、受入テスト 10/10 PASS（記録・集計・認証・削除・DB直アクセス拒否・誤PWスロットル・セキュリティヘッダ）を確認済み。公開 URL は https://debugprint.com/parking/ （詳細: reports/2026-08-07-production-deploy.txt）。同日、ユーザーによる本番直接改修（DEMO 化）をリポジトリへ反映し、本番を正規シードで再投入・受入テスト 10/10 PASS（reports/2026-08-07-production-verify.txt）。**DEMO 運用のため本番の管理パスワードは 1234 です**（デモ用のためパスワードは形式的なもの — UI に注記表示）。**新機能ラウンド（同日）**: 日付クリック詳細モーダル・集計表示中の記録連動・60 秒自動更新チェックを本番へ直接デプロイし、受入テスト 13/13 PASS（reports/2026-08-07-production-verify.txt）。**管理者画面ラウンド（2026-08-09）**: 専用管理者 URL（/admin.php）新設（PW ダイアログ → 日別集計・日詳細編集/削除・月報/年報/分析）とメイン再編（カレンダー過去閲覧・PW なし公開）を本番へ直接デプロイ。受入テスト **17/17 PASS**・ブラウザ UI 検証（本番 URL に対するヘッドレス chrome での動作確認）を実施（reports/2026-08-07-production-verify.txt ほか）。**カレンダー・管理者画面改善ラウンド（同日）**: カレンダー 7 列グリッド修正・管理者画面へのログアウト内蔵・前月/翌月ボタンをデプロイ（受入 17/17 PASS・ブラウザ 16/16 PASS）。**グラフ表示変更 + 過去日追加ラウンド（同日・コミット 44f0709 → リリース証跡 6dc1c7f）**: 月報/年報グラフを明細の上へ・時間帯別グラフを実データ範囲へ・日詳細に「追加」ボタン（要認証 add_record）を本番へデプロイ。受入テスト **19/19 PASS**（add_record 401/400 検証含む）・ブラウザ UI 検証 **11/11 PASS**・デモデータ 402 件無傷（reports/2026-08-09-admin-round-chart-add-release.txt）。
 
 ## ディレクトリ構成
 
