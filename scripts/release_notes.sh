@@ -16,6 +16,6 @@ parking-ticket-app $VERSION（MIT License・Copyright (c) 2026 kuwa2005）
 - 収録: index.php / admin.php / api.php / lib/config.php / lib/db.php / lib/store.php / data/.htaccess / scripts/seed_demo.php / README.md / LICENSE
 - 配置: zip を展開してドキュメントルートへアップロード（data/ を書き込み可能に）
 
-詳細: https://github.com/kuwa2005/parking-ticket-app#readme
+詳細: https://github.com/kuwa2005/parking-ticket-app-base#readme
 デモ運用例: https://debugprint.com/parking/
 EOF

@@ -5,6 +5,16 @@ data/*.db-shm
 # リリースビルド成果物（GitHub Actions が生成・コミットしない）
 dist/
 
+# 秘密・資格情報（誤コミット防止）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+deploy.sh
+public/setup.php
+
 # エージェント作業ログ（リポジトリ外）
 .oimo
 log.md

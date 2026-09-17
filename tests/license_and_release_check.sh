@@ -109,7 +109,7 @@ printf '%s\n' "$NOTES" | grep -q '^parking-ticket-app v1.0.0' || ok=0
 [ "$LINES" -ge 7 ] || ok=0
 [ "$BLANKS" -ge 2 ] || ok=0
 printf '%s\n' "$NOTES" | grep -q '^- 収録: .*LICENSE' || ok=0
-printf '%s\n' "$NOTES" | grep -q 'github.com/kuwa2005/parking-ticket-app' || ok=0
+printf '%s\n' "$NOTES" | grep -q 'github.com/kuwa2005/parking-ticket-app-base' || ok=0
 check T9 "$ok" "release_notes.sh 出力: $LINES 行・空行 $BLANKS・収録箇条書き（10 ファイル）・README リンク"
 
 echo

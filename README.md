@@ -2,7 +2,7 @@
 
 無料の駐車券を渡したら、**入庫時間**と**日時**を記録するだけのシンプルなWebアプリです。スマホのブラウザで開いて、その場でポチポチ記録できます。
 
-> **本リポジトリは、minokenbun 様向けにフォークした専用版です。** 元となる汎用版（https://github.com/kuwa2005/parking-ticket-app）から、記録内容を「枚数」から「**入庫時間（時:分）**」へ変更したカスタマイズ版です。各記録 = 1 台分（1 枚）として扱われ、合計・月報・年報・分析はすべて記録数になります。
+> **本リポジトリは、minokenbun 様向けにフォークした専用版です。** 元となる汎用版（https://github.com/kuwa2005/parking-ticket-app-base）から、記録内容を「枚数」から「**入庫時間（時:分）**」へ変更したカスタマイズ版です。各記録 = 1 台分（1 枚）として扱われ、合計・月報・年報・分析はすべて記録数になります。
 
 - 各端末にはデータを保存せず、サーバー側の SQLite に永続化
 - モバイルファーストの日本語UI（Bootstrap 5.3.3）
@@ -73,7 +73,7 @@ define('ADMIN_PW', '1234');
 
 Bootstrap は CDN（jsDelivr）参照のため、アプリはPHPファイルのみで動作します。完全オフラインのLANで使う場合は Bootstrap をローカル配置に切り替えてください。
 
-**デプロイ一式は GitHub Releases から取得できます**（v1.0.0 以降・GitHub Actions で自動生成された zip = アプリ一式 + README + LICENSE）: https://github.com/kuwa2005/parking-ticket-app/releases
+**デプロイ一式は GitHub Releases から取得できます**（v1.0.0 以降・GitHub Actions で自動生成された zip = アプリ一式 + README + LICENSE）: https://github.com/kuwa2005/parking-ticket-app-base/releases
 
 **本フォーク版の本番デプロイ（2026-08-10）**: 元版と同じ coreserver.jp 共有ホスティングに **https://debugprint.com/parking-custom/** としてデプロイ（SQLite 版・data/parking.db をシード済みで配置）。デモデータは上記 `seed_custom_demo.php` で生成した 867 件（2026-05-01〜08-09・1 日 1〜15 枚・入庫 08:45〜16:30・発券 09:30〜17:05）。デプロイ後、実環境で記録/日別/日詳細/管理者（ログイン・集計・更新）/未認証 401 を確認済み。管理パスワードは元版と同様 `1234`（デモ用）。
 

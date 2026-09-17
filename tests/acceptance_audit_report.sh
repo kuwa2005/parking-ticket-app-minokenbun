@@ -43,11 +43,11 @@ case "$st" in
 esac
 
 # T7: GitHub にファイルが存在（gh api）
-out=$(gh api "repos/kuwa2005/parking-ticket-app/contents/$F" --jq '.name + " " + (.size|tostring)' 2>&1)
+out=$(gh api "repos/kuwa2005/parking-ticket-app-base/contents/$F" --jq '.name + " " + (.size|tostring)' 2>&1)
 if printf '%s' "$out" | grep -q "^$F "; then ok "T7 gh api で存在確認（$out）"; else ng "T7 gh api" "$out"; fi
 
 # T8: raw URL が 200
-url=$(gh api "repos/kuwa2005/parking-ticket-app/contents/$F" --jq '.download_url' 2>/dev/null)
+url=$(gh api "repos/kuwa2005/parking-ticket-app-base/contents/$F" --jq '.download_url' 2>/dev/null)
 code=$(curl -s -o /dev/null -w '%{http_code}' "$url")
 [ "$code" = "200" ] && ok "T8 raw URL 200" || ng "T8 raw URL" "code=$code"
 
